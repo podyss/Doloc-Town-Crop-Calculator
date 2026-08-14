@@ -95,6 +95,7 @@ button {
   align-items: center;
   gap: 10px;
   color: inherit;
+  text-transform: none;
   text-decoration: underline;
   text-decoration-color: #66736b;
   text-underline-offset: 3px;
