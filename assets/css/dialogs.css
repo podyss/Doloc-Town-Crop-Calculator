@@ -1,0 +1,204 @@
+/* Forms, dialogs, confirmation states, and toasts. */
+.modal {
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  padding: 0;
+  overflow: auto;
+  color: var(--ink);
+  border: 0;
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.modal::backdrop {
+  background: rgb(18 27 21 / 60%);
+  backdrop-filter: blur(2px);
+}
+
+.modal form,
+.small-modal {
+  padding: 26px;
+}
+
+.modal-header {
+  margin-bottom: 24px;
+}
+
+.modal-header h2 {
+  margin-top: 4px;
+  font-size: 22px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.field {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.field > span,
+.duration-field legend {
+  color: #455049;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.field input,
+.field select,
+.duration-field input,
+.duration-field select {
+  width: 100%;
+  height: 44px;
+  min-width: 0;
+  padding: 9px 11px;
+  color: var(--ink);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  outline: 0;
+  background: var(--surface);
+}
+
+.field input:focus,
+.field select:focus,
+.duration-field input:focus,
+.duration-field select:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgb(36 115 75 / 14%);
+}
+
+.category-field {
+  margin-top: 18px;
+}
+
+.duration-field {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.duration-field legend {
+  grid-column: 1 / -1;
+  margin-bottom: 8px;
+  padding: 0;
+}
+
+.full-field {
+  grid-column: 1 / -1;
+}
+
+.input-suffix {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  background: var(--surface-muted);
+}
+
+.input-suffix:focus-within {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgb(36 115 75 / 14%);
+}
+
+.input-suffix input {
+  border: 0;
+  border-radius: 5px 0 0 5px;
+  box-shadow: none;
+}
+
+.input-suffix input:focus {
+  box-shadow: none;
+}
+
+.input-suffix span {
+  padding: 0 11px;
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.small-modal {
+  width: min(440px, calc(100vw - 32px));
+}
+
+.backup-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.backup-actions .button {
+  justify-content: flex-start;
+}
+
+.confirm-modal {
+  width: min(420px, calc(100vw - 32px));
+  padding: 28px;
+  text-align: center;
+}
+
+.confirm-modal p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.confirm-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 14px;
+  color: var(--red);
+  border-radius: 50%;
+  background: var(--red-soft);
+}
+
+.confirm-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.confirm-modal .modal-actions {
+  justify-content: center;
+}
+
+.toast {
+  position: fixed;
+  z-index: 20;
+  right: 24px;
+  bottom: 24px;
+  max-width: min(380px, calc(100vw - 32px));
+  padding: 11px 15px;
+  color: #fff;
+  font-size: 14px;
+  border-radius: 6px;
+  background: #202a24;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 18%);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}

@@ -1,0 +1,206 @@
+"use strict";
+
+const STORAGE_KEY = "crop-calculator-data-v1";
+const LAYOUT_CELL_SIZE = 30;
+const CROP_ORDER = [
+  "crop-endyam",
+  "crop-thunder-grass",
+  "crop-paddy",
+  "crop-chinese-cabbage",
+  "crop-scallion",
+  "crop-pumpkin",
+  "crop-turnip",
+  "crop-mint-leaf",
+  "crop-strawberry",
+  "crop-alfalfa",
+  "crop-succulent",
+  "crop-wheat",
+  "crop-potato",
+  "crop-corn",
+  "crop-watermelon",
+  "crop-tomato",
+  "crop-pepper",
+  "crop-eden-flower",
+  "crop-apple",
+  "crop-coffee-bean",
+  "crop-tea-leaf",
+  "crop-agave",
+  "crop-grape",
+  "crop-beer-flower",
+  "crop-cucumber",
+  "crop-crawlrus",
+  "crop-crimson-ascomyceter",
+  "crop-chanterelle",
+  "crop-mushroom",
+  "crop-toadstool",
+];
+const CROP_ORDER_INDEX = new Map(CROP_ORDER.map((id, index) => [id, index]));
+const DEFAULT_CROPS = sortCrops(Array.isArray(window.CROP_CATALOG) ? window.CROP_CATALOG : []);
+
+const CATEGORY_CONFIG = {
+  equipment: { label: "设备", description: "设备加成", maxSelected: Infinity },
+  building: { label: "建筑", description: "最多选择 1 个", maxSelected: 1 },
+  fertilizer: { label: "肥料", description: "最多选择 1 个", maxSelected: 1 },
+  gene: { label: "基因", description: "最多选择 3 个", maxSelected: 3 },
+};
+
+const BUILDING_CONFIG = {
+  "plant-greenhouse": {
+    name: "植物大棚",
+    interiorWidth: 26,
+    interiorHeight: 7,
+    mainWidth: 15,
+    mainHeight: 5,
+    speedPercent: 20,
+  },
+  greenhouse: {
+    name: "温室",
+    interiorWidth: 20,
+    interiorHeight: 8,
+    mainWidth: 10,
+    mainHeight: 7,
+    speedPercent: 10,
+  },
+};
+
+const LAYOUT_TOOL_CONFIG = {
+  crop: { name: "作物", width: 2, height: 2 },
+  sprinkler: {
+    name: "电力洒水器",
+    width: 2,
+    height: 2,
+    coverageWidth: 10,
+    coverageHeight: 5,
+  },
+  "grow-light": {
+    name: "农业补光灯",
+    width: 2,
+    height: 4,
+    coverageWidth: 14,
+    coverageHeight: 8,
+    speedPercent: 25,
+  },
+  eraser: { name: "擦除", width: 1, height: 1 },
+};
+
+const CROP_CONTAINER_CONFIG = {
+  generic: { name: "通用", width: 2, height: 2 },
+  shrub: { name: "灌木", width: 3, height: 2 },
+  vine: { name: "藤蔓", width: 2, height: 2 },
+  mushroom: { name: "菌类", width: 2, height: 2 },
+};
+
+const DEFAULT_STATE = {
+  version: 12,
+  crops: DEFAULT_CROPS,
+  modifiers: [
+    {
+      id: "modifier-grow-light",
+      name: "农业补光灯",
+      category: "equipment",
+      speedPercent: 25,
+      harvestBonus: 0,
+      yieldFlat: 0,
+      yieldPercent: 0,
+      minBaseYield: 0,
+    },
+    {
+      id: "modifier-organic-fertilizer",
+      name: "有机肥",
+      category: "fertilizer",
+      speedPercent: 50,
+      harvestBonus: 0,
+      yieldFlat: 0,
+      yieldPercent: 0,
+      minBaseYield: 0,
+    },
+    {
+      id: "modifier-fertilizer",
+      name: "肥料",
+      category: "fertilizer",
+      speedPercent: 35,
+      harvestBonus: 0,
+      yieldFlat: 0,
+      yieldPercent: 0,
+      minBaseYield: 0,
+    },
+    {
+      id: "modifier-long-flowering",
+      name: "花期延长",
+      category: "gene",
+      speedPercent: -30,
+      harvestBonus: 2,
+      yieldFlat: 0,
+      yieldPercent: 0,
+      minBaseYield: 0,
+    },
+    {
+      id: "modifier-wild-growth",
+      name: "野蛮生长",
+      category: "gene",
+      speedPercent: 30,
+      harvestBonus: 0,
+      yieldFlat: 0,
+      yieldPercent: 0,
+      minBaseYield: 0,
+    },
+    {
+      id: "modifier-plant-greenhouse",
+      name: "植物大棚",
+      category: "building",
+      speedPercent: 20,
+      harvestBonus: 0,
+      yieldFlat: 0,
+      yieldPercent: 0,
+      minBaseYield: 0,
+    },
+    {
+      id: "modifier-greenhouse",
+      name: "温室",
+      category: "building",
+      speedPercent: 10,
+      harvestBonus: 0,
+      yieldFlat: 0,
+      yieldPercent: 0,
+      minBaseYield: 0,
+    },
+    {
+      id: "modifier-multi-fruit",
+      name: "分型作物",
+      category: "gene",
+      speedPercent: 0,
+      harvestBonus: 0,
+      yieldFlat: 1,
+      yieldPercent: 0,
+      minBaseYield: 3,
+    },
+    {
+      id: "modifier-time-gift",
+      name: "时间馈赠",
+      category: "gene",
+      speedPercent: 0,
+      harvestBonus: 0,
+      yieldFlat: 0,
+      yieldPercent: 0,
+      minBaseYield: 0,
+      survivalYield: {
+        intervalMinutes: 28 * 24 * 60,
+        yieldPerInterval: 1,
+      },
+    },
+  ],
+  selectedCropId: "crop-wheat",
+  selectedProcessingByCrop: {},
+  enabledModifierIdsByCrop: {},
+  layout: {
+    activeView: "crop",
+    buildingId: "plant-greenhouse",
+    selectedCropId: "crop-wheat",
+    selectedTool: "crop",
+    selectedFertilizerId: "",
+    objectsByBuilding: {
+      "plant-greenhouse": [],
+      greenhouse: [],
+    },
+  },
+};
