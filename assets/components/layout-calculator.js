@@ -15,14 +15,26 @@ defineTemplateElement("layout-calculator-view", String.raw`
     </div>
 
     <div class="layout-tool-row">
-      <div class="layout-crop-category-control">
-        <span>类型</span>
-        <div class="crop-category-switch" id="layout-crop-category" role="group" aria-label="选择作物类型"></div>
+      <div class="layout-crop-picker-control">
+        <span id="layout-crop-picker-label">作物</span>
+        <div class="layout-crop-picker" id="layout-crop-picker">
+          <button class="layout-crop-trigger" id="layout-crop-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="layout-crop-picker-panel" aria-labelledby="layout-crop-picker-label layout-crop-selected-name">
+            <span class="layout-crop-trigger-copy">
+              <strong id="layout-crop-selected-name">末芋</strong>
+              <small id="layout-crop-selected-meta">通用 · 2 × 2</small>
+            </span>
+            <i data-lucide="chevron-down"></i>
+          </button>
+          <div class="layout-crop-picker-panel" id="layout-crop-picker-panel" hidden>
+            <label class="layout-crop-search">
+              <i data-lucide="search"></i>
+              <input id="layout-crop-search" type="search" placeholder="搜索作物" autocomplete="off" aria-label="搜索作物">
+            </label>
+            <div class="layout-crop-filters" id="layout-crop-filters" role="group" aria-label="按作物类型筛选"></div>
+            <div class="layout-crop-options" id="layout-crop-options" role="listbox" aria-label="作物"></div>
+          </div>
+        </div>
       </div>
-      <label class="layout-crop-control">
-        <span>作物</span>
-        <select id="layout-crop-select" aria-label="选择要摆放的作物"></select>
-      </label>
       <label class="layout-processing-control">
         <span>加工</span>
         <select id="layout-processing-select" aria-label="选择当前作物的加工方式">

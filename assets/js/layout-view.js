@@ -1,27 +1,16 @@
 "use strict";
 
+let layoutCropFilterType = "all";
+
 function renderLayout() {
   const layout = state.layout;
   const building = BUILDING_CONFIG[layout.buildingId];
   const objects = getCurrentLayoutObjects();
   const maps = buildLayoutMaps(building, objects);
   const selectedLayoutCrop = state.crops.find((crop) => crop.id === layout.selectedCropId);
-  const selectedCropType = getCropContainerType(selectedLayoutCrop);
   const dimensions = getLayoutToolDimensions(layout.selectedTool, selectedLayoutCrop);
 
-  elements["layout-crop-category"].innerHTML = renderCropCategoryButtons(
-    state.crops,
-    selectedCropType,
-    "data-layout-crop-category"
-  );
-  elements["layout-crop-category"].querySelectorAll("[data-layout-crop-category]").forEach((button) => {
-    button.addEventListener("click", () => selectLayoutCropCategory(button.dataset.layoutCropCategory));
-  });
-  elements["layout-crop-select"].innerHTML = state.crops
-    .filter((crop) => getCropContainerType(crop) === selectedCropType)
-    .map((crop) => `<option value="${escapeHtml(crop.id)}">${escapeHtml(crop.name)}</option>`)
-    .join("");
-  elements["layout-crop-select"].value = layout.selectedCropId;
+  renderLayoutCropPicker(selectedLayoutCrop);
   const processingOptions = Array.isArray(selectedLayoutCrop.processingOptions)
     ? selectedLayoutCrop.processingOptions
     : [];
@@ -168,19 +157,167 @@ function renderLayoutBreakdown(breakdown) {
   ].join("");
 }
 
-function selectLayoutCrop() {
-  state.layout.selectedCropId = elements["layout-crop-select"].value;
-  state.layout.selectedTool = "crop";
-  persistState();
-  render();
+function renderLayoutCropPicker(selectedCrop) {
+  const container = getCropContainer(selectedCrop);
+  const cropSize = getCropLayoutSize(selectedCrop);
+  elements["layout-crop-selected-name"].textContent = selectedCrop.name;
+  elements["layout-crop-selected-meta"].textContent = `${container.name} · ${cropSize.width} × ${cropSize.height}`;
+
+  elements["layout-crop-filters"].innerHTML = [
+    renderLayoutCropFilter("all", "全部", state.crops.length),
+    ...Object.entries(CROP_CONTAINER_CONFIG).map(([type, config]) => {
+      const count = state.crops.filter((crop) => getCropContainerType(crop) === type).length;
+      return renderLayoutCropFilter(type, config.name, count);
+    }),
+  ].join("");
+  renderLayoutCropPickerOptions();
 }
 
-function selectLayoutCropCategory(type) {
-  const firstCrop = state.crops.find((crop) => getCropContainerType(crop) === type);
+function renderLayoutCropFilter(type, name, count) {
+  const active = layoutCropFilterType === type;
+  return `
+    <button class="layout-crop-filter ${active ? "active" : ""}" type="button" data-layout-crop-filter="${escapeHtml(type)}" aria-pressed="${active}" ${count === 0 ? "disabled" : ""}>
+      <span>${escapeHtml(name)}</span><small>${count}</small>
+    </button>
+  `;
+}
+
+function renderLayoutCropPickerOptions() {
+  const query = elements["layout-crop-search"].value.trim().toLocaleLowerCase("zh-CN");
+  const matches = state.crops.filter((crop) => {
+    const matchesType = layoutCropFilterType === "all" || getCropContainerType(crop) === layoutCropFilterType;
+    return matchesType && crop.name.toLocaleLowerCase("zh-CN").includes(query);
+  });
+
+  if (matches.length === 0) {
+    elements["layout-crop-options"].innerHTML = `
+      <div class="layout-crop-empty" role="status">
+        <i data-lucide="search-x"></i>
+        <span>没有匹配的作物</span>
+      </div>
+    `;
+    refreshIcons();
+    return;
+  }
+
+  elements["layout-crop-options"].innerHTML = Object.entries(CROP_CONTAINER_CONFIG).map(([type, config]) => {
+    const crops = matches.filter((crop) => getCropContainerType(crop) === type);
+    if (crops.length === 0) return "";
+    const heading = layoutCropFilterType === "all"
+      ? `<div class="layout-crop-group-heading"><span>${escapeHtml(config.name)}</span><small>${crops.length}</small></div>`
+      : "";
+    return `
+      <div class="layout-crop-option-group" role="group" aria-label="${escapeHtml(config.name)}">
+        ${heading}
+        ${crops.map(renderLayoutCropOption).join("")}
+      </div>
+    `;
+  }).join("");
+  refreshIcons();
+}
+
+function renderLayoutCropOption(crop) {
+  const selected = crop.id === state.layout.selectedCropId;
+  const size = getCropLayoutSize(crop);
+  return `
+    <button class="layout-crop-option ${selected ? "selected" : ""}" type="button" role="option" aria-selected="${selected}" data-layout-crop-id="${escapeHtml(crop.id)}">
+      <strong>${escapeHtml(crop.name)}</strong>
+      <span>${size.width} × ${size.height}</span>
+      <i data-lucide="check" aria-hidden="true"></i>
+    </button>
+  `;
+}
+
+function toggleLayoutCropPicker() {
+  const panel = elements["layout-crop-picker-panel"];
+  if (!panel.hidden) {
+    closeLayoutCropPicker();
+    return;
+  }
+
+  layoutCropFilterType = "all";
+  elements["layout-crop-search"].value = "";
+  panel.hidden = false;
+  elements["layout-crop-trigger"].setAttribute("aria-expanded", "true");
+  renderLayoutCropPicker(state.crops.find((crop) => crop.id === state.layout.selectedCropId));
+  requestAnimationFrame(() => {
+    const selectedOption = elements["layout-crop-options"].querySelector(".layout-crop-option.selected");
+    if (selectedOption) {
+      const optionRect = selectedOption.getBoundingClientRect();
+      const listRect = elements["layout-crop-options"].getBoundingClientRect();
+      elements["layout-crop-options"].scrollTop += optionRect.top - listRect.top - ((listRect.height - optionRect.height) / 2);
+    }
+    elements["layout-crop-search"].focus();
+  });
+}
+
+function closeLayoutCropPicker({ restoreFocus = false } = {}) {
+  if (!elements["layout-crop-picker-panel"] || elements["layout-crop-picker-panel"].hidden) return;
+  elements["layout-crop-picker-panel"].hidden = true;
+  elements["layout-crop-trigger"].setAttribute("aria-expanded", "false");
+  if (restoreFocus) elements["layout-crop-trigger"].focus();
+}
+
+function handleLayoutCropFilterClick(event) {
+  const button = event.target.closest("[data-layout-crop-filter]");
+  if (!button || button.disabled) return;
+  layoutCropFilterType = button.dataset.layoutCropFilter;
   const selectedCrop = state.crops.find((crop) => crop.id === state.layout.selectedCropId);
-  if (!firstCrop || getCropContainerType(selectedCrop) === type) return;
-  state.layout.selectedCropId = firstCrop.id;
+  renderLayoutCropPicker(selectedCrop);
+  elements["layout-crop-search"].focus();
+}
+
+function handleLayoutCropOptionClick(event) {
+  const button = event.target.closest("[data-layout-crop-id]");
+  if (!button) return;
+  selectLayoutCrop(button.dataset.layoutCropId);
+}
+
+function handleLayoutCropTriggerKeydown(event) {
+  if (event.key !== "ArrowDown" || !elements["layout-crop-picker-panel"].hidden) return;
+  event.preventDefault();
+  toggleLayoutCropPicker();
+}
+
+function handleLayoutCropSearchKeydown(event) {
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeLayoutCropPicker({ restoreFocus: true });
+  }
+  if (event.key === "ArrowDown") {
+    const firstOption = elements["layout-crop-options"].querySelector(".layout-crop-option");
+    if (firstOption) {
+      event.preventDefault();
+      firstOption.focus();
+    }
+  }
+}
+
+function handleLayoutCropOptionsKeydown(event) {
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeLayoutCropPicker({ restoreFocus: true });
+    return;
+  }
+  if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+
+  const options = [...elements["layout-crop-options"].querySelectorAll(".layout-crop-option")];
+  if (options.length === 0) return;
+  event.preventDefault();
+  const currentIndex = options.indexOf(document.activeElement);
+  let nextIndex = currentIndex;
+  if (event.key === "Home") nextIndex = 0;
+  if (event.key === "End") nextIndex = options.length - 1;
+  if (event.key === "ArrowDown") nextIndex = Math.min(currentIndex + 1, options.length - 1);
+  if (event.key === "ArrowUp") nextIndex = currentIndex <= 0 ? 0 : currentIndex - 1;
+  options[nextIndex].focus();
+}
+
+function selectLayoutCrop(cropId) {
+  if (!state.crops.some((crop) => crop.id === cropId)) return;
+  state.layout.selectedCropId = cropId;
   state.layout.selectedTool = "crop";
+  closeLayoutCropPicker();
   persistState();
   render();
 }

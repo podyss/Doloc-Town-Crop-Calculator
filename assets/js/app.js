@@ -85,8 +85,14 @@ function cacheElements() {
     "crop-result-view",
     "crop-view",
     "layout-view",
-    "layout-crop-category",
-    "layout-crop-select",
+    "layout-crop-picker",
+    "layout-crop-trigger",
+    "layout-crop-selected-name",
+    "layout-crop-selected-meta",
+    "layout-crop-picker-panel",
+    "layout-crop-search",
+    "layout-crop-filters",
+    "layout-crop-options",
     "layout-processing-select",
     "layout-fertilizer-select",
     "layout-interior-size",
@@ -130,12 +136,22 @@ function bindEvents() {
   elements["confirm-accept"].addEventListener("click", acceptConfirmation);
   elements["confirm-cancel"].addEventListener("click", closeConfirmation);
   elements["processing-option"].addEventListener("change", selectProcessingOption);
-  elements["layout-crop-select"].addEventListener("change", selectLayoutCrop);
+  elements["layout-crop-trigger"].addEventListener("click", toggleLayoutCropPicker);
+  elements["layout-crop-trigger"].addEventListener("keydown", handleLayoutCropTriggerKeydown);
+  elements["layout-crop-search"].addEventListener("input", renderLayoutCropPickerOptions);
+  elements["layout-crop-search"].addEventListener("keydown", handleLayoutCropSearchKeydown);
+  elements["layout-crop-filters"].addEventListener("click", handleLayoutCropFilterClick);
+  elements["layout-crop-options"].addEventListener("click", handleLayoutCropOptionClick);
+  elements["layout-crop-options"].addEventListener("keydown", handleLayoutCropOptionsKeydown);
   elements["layout-processing-select"].addEventListener("change", selectLayoutProcessingOption);
   elements["layout-fertilizer-select"].addEventListener("change", selectLayoutFertilizer);
   elements["crop-layout-type"].addEventListener("change", applyCropContainerPreset);
   elements["layout-grid"].addEventListener("click", handleLayoutGridClick);
   elements["clear-layout"].addEventListener("click", requestLayoutClear);
+
+  document.addEventListener("pointerdown", (event) => {
+    if (!elements["layout-crop-picker"].contains(event.target)) closeLayoutCropPicker();
+  });
 
   document.querySelectorAll("[data-view]").forEach((button) => {
     button.addEventListener("click", () => selectView(button.dataset.view));
@@ -194,6 +210,7 @@ function renderView() {
 
 function selectView(view) {
   if (!['crop', 'layout'].includes(view) || state.layout.activeView === view) return;
+  closeLayoutCropPicker();
   state.layout.activeView = view;
   persistState();
   render();

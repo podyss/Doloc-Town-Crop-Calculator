@@ -172,12 +172,31 @@
     flex: 1;
   }
 
-  .layout-crop-control,
-  .layout-crop-category-control,
+  .layout-crop-picker-control,
   .layout-processing-control,
   .layout-fertilizer-control {
     min-width: 0;
     width: 100%;
+  }
+
+  .layout-crop-picker {
+    width: 100%;
+  }
+
+  .layout-crop-picker-panel {
+    z-index: 30;
+    position: fixed;
+    top: auto;
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    width: auto;
+    max-height: calc(100dvh - 24px);
+    padding: 12px;
+  }
+
+  .layout-crop-options {
+    max-height: min(52dvh, 360px);
   }
 
   .tool-palette {
