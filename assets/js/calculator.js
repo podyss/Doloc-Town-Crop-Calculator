@@ -80,15 +80,29 @@ function calculateValue(crop, calculation) {
   const unitPrice = processing?.finalUnitPrice ?? crop.unitPrice ?? 0;
   const finalValueMin = finalYieldMin * unitPrice;
   const finalValueMax = finalYieldMax * unitPrice;
-  const processingMinutesMin = calculation.totalYieldMin * (processing?.processingMinutesPerInputMin ?? 0);
-  const processingMinutesMax = calculation.totalYieldMax * (processing?.processingMinutesPerInputMax ?? 0);
+  const stages = Array.isArray(processing?.stages) ? processing.stages : [];
+  const processingMinutes = processing
+    ? stages.reduce((sum, stage) => sum + stage.durationMinutes, 0)
+    : 0;
   const validTime = calculation.validSpeed;
-  const totalMinutesMin = validTime ? calculation.totalMinutes + processingMinutesMin : null;
-  const totalMinutesMax = validTime ? calculation.totalMinutes + processingMinutesMax : null;
+  const firstProductMinutes = validTime ? calculation.firstMinutes + processingMinutes : null;
+  const totalMinutesMin = firstProductMinutes;
+  const totalMinutesMax = totalMinutesMin;
+  const firstHarvest = validTime ? calculation.harvestDetails[0] : null;
+  const startupFinalYieldMin = firstHarvest ? firstHarvest.yieldMin * outputPerInputMin : null;
+  const startupFinalYieldMax = firstHarvest ? firstHarvest.yieldMax * outputPerInputMax : null;
+  const startupDailyValueMin = validTime
+    ? startupFinalYieldMin * unitPrice / (firstProductMinutes / 1440)
+    : null;
+  const startupDailyValueMax = validTime
+    ? startupFinalYieldMax * unitPrice / (firstProductMinutes / 1440)
+    : null;
+  const dailyFinalYieldMin = validTime ? calculation.dailyYieldMin * outputPerInputMin : null;
+  const dailyFinalYieldMax = validTime ? calculation.dailyYieldMax * outputPerInputMax : null;
   const dailyValues = validTime
     ? [
-      finalValueMin / (totalMinutesMin / 1440),
-      finalValueMax / (totalMinutesMax / 1440),
+      dailyFinalYieldMin * unitPrice,
+      dailyFinalYieldMax * unitPrice,
     ]
     : [];
 
@@ -102,10 +116,16 @@ function calculateValue(crop, calculation) {
     finalYieldMax,
     finalValueMin,
     finalValueMax,
-    processingMinutesMin,
-    processingMinutesMax,
+    processingMinutes,
+    firstProductMinutes,
     totalMinutesMin,
     totalMinutesMax,
+    startupFinalYieldMin,
+    startupFinalYieldMax,
+    startupDailyValueMin,
+    startupDailyValueMax,
+    dailyFinalYieldMin,
+    dailyFinalYieldMax,
     dailyValueMin: dailyValues.length ? Math.min(...dailyValues) : null,
     dailyValueMax: dailyValues.length ? Math.max(...dailyValues) : null,
     validTime,

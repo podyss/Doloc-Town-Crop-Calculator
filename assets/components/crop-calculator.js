@@ -87,7 +87,7 @@ defineTemplateElement("crop-calculator-view", String.raw`
           <strong id="value-yield">3 个</strong>
         </div>
         <div class="value-item">
-          <span>总耗时</span>
+          <span id="value-time-label">达到理论产能耗时</span>
           <strong id="value-total-time">4天</strong>
         </div>
         <div class="value-item value-emphasis">
@@ -95,7 +95,11 @@ defineTemplateElement("crop-calculator-view", String.raw`
           <strong id="value-total">165</strong>
         </div>
         <div class="value-item value-emphasis">
-          <span>日均产值</span>
+          <span>起步期日均产值</span>
+          <strong id="value-startup-daily">41.25/天</strong>
+        </div>
+        <div class="value-item value-emphasis">
+          <span>理论最大日均产值</span>
           <strong id="value-daily">41.25/天</strong>
         </div>
       </div>

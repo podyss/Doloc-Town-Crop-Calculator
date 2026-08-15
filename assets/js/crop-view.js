@@ -198,7 +198,7 @@ function renderProcessingOptions(crop) {
   elements["processing-option"].value = selected?.id ?? "";
   elements["processing-option"].disabled = options.length === 0;
   elements["processing-route"].textContent = selected
-    ? selected.stages.map((stage) => stage.method).join(" → ")
+    ? `${selected.stages.map((stage) => stage.method).join(" → ")} · 设施按产能配足`
     : options.length > 0 ? "不经过加工设备" : "当前作物没有加工路线";
 }
 
@@ -208,8 +208,12 @@ function renderValueCalculation(crop, calculation) {
   elements["value-unit-price"].textContent = formatNumber(value.unitPrice);
   elements["value-yield"].textContent = `${formatRange(value.finalYieldMin, value.finalYieldMax)} 个`;
   elements["value-total"].textContent = formatRange(value.finalValueMin, value.finalValueMax);
+  elements["value-time-label"].textContent = "达到理论产能耗时";
   elements["value-total-time"].textContent = value.validTime
     ? formatDurationRange(value.totalMinutesMin, value.totalMinutesMax)
+    : "无法计算";
+  elements["value-startup-daily"].textContent = value.validTime
+    ? `${formatRange(value.startupDailyValueMin, value.startupDailyValueMax)}/天`
     : "无法计算";
   elements["value-daily"].textContent = value.validTime
     ? `${formatRange(value.dailyValueMin, value.dailyValueMax)}/天`
@@ -219,17 +223,21 @@ function renderValueCalculation(crop, calculation) {
 
 function buildValueFormula(value) {
   const totalValue = formatRange(value.finalValueMin, value.finalValueMax);
-  if (!value.validTime) return `产值：${totalValue}；日均产值无法计算`;
+  if (!value.validTime) return `产值：${totalValue}；理论最大日均产值无法计算`;
 
   const finalYield = formatRange(value.finalYieldMin, value.finalYieldMax);
-  const totalTime = formatDurationRange(value.totalMinutesMin, value.totalMinutesMax);
+  const rampUpTime = formatDurationRange(value.totalMinutesMin, value.totalMinutesMax);
+  const firstProductTime = formatDuration(value.firstProductMinutes);
+  const startupFinalYield = formatRange(value.startupFinalYieldMin, value.startupFinalYieldMax);
+  const startupDailyValue = formatRange(value.startupDailyValueMin, value.startupDailyValueMax);
   const dailyValue = formatRange(value.dailyValueMin, value.dailyValueMax);
+  const dailyFinalYield = formatRateRange(value.dailyFinalYieldMin, value.dailyFinalYieldMax);
   if (!value.processing) {
-    return `直接出售：${finalYield} × ${formatNumber(value.unitPrice)} = ${totalValue}；${totalValue} ÷ ${totalTime} = ${dailyValue}/天`;
+    return `直接出售：${finalYield} × ${formatNumber(value.unitPrice)} = ${totalValue}；起步期 ${startupFinalYield} 个 × ${formatNumber(value.unitPrice)} ÷ ${firstProductTime} = ${startupDailyValue}/天；理论最大 ${dailyFinalYield} 个/天 × ${formatNumber(value.unitPrice)} = ${dailyValue}/天`;
   }
 
-  const processingTime = formatDurationRange(value.processingMinutesMin, value.processingMinutesMax);
-  return `加工后：${finalYield} × ${formatNumber(value.unitPrice)} = ${totalValue}；加工 ${processingTime}，总耗时 ${totalTime}，日均 ${dailyValue}/天`;
+  const processingTime = formatDuration(value.processingMinutes);
+  return `加工后：${finalYield} × ${formatNumber(value.unitPrice)} = ${totalValue}；加工链等待 ${processingTime}，${rampUpTime} 达到理论产能；起步期 ${startupFinalYield} 个 × ${formatNumber(value.unitPrice)} ÷ ${firstProductTime} = ${startupDailyValue}/天；设施按产能配足时，理论最大 ${dailyFinalYield} 个/天 × ${formatNumber(value.unitPrice)} = ${dailyValue}/天`;
 }
 
 function buildEffectTags(modifier, eligible) {

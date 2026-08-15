@@ -59,7 +59,7 @@ function renderLayout() {
   elements["layout-daily-yield"].textContent = `${formatRateRange(result.dailyYieldMin, result.dailyYieldMax)} 个`;
   elements["layout-daily-value"].textContent = formatRange(result.dailyValueMin, result.dailyValueMax);
   elements["layout-daily-value-detail"].textContent = result.processedCropTypeCount > 0
-    ? `含 ${result.processedCropTypeCount} 种加工产物及加工耗时`
+    ? `含 ${result.processedCropTypeCount} 种加工产物 · 设施按产能配足`
     : "全部作物直接出售";
   elements["layout-main-cell-value"].textContent = formatRange(result.dailyValueMin / mainCells, result.dailyValueMax / mainCells);
   elements["layout-interior-cell-value"].textContent = formatRange(result.dailyValueMin / interiorCells, result.dailyValueMax / interiorCells);

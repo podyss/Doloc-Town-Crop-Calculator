@@ -89,17 +89,17 @@ defineTemplateElement("layout-calculator-view", String.raw`
       <small id="layout-crop-status">有效 0 / 已种 0 个</small>
     </div>
     <div class="layout-result-item layout-result-accent">
-      <span>建筑日产值</span>
+      <span>建筑理论日产值</span>
       <strong id="layout-daily-value">0</strong>
       <small id="layout-daily-value-detail">按各作物所选出售方式</small>
     </div>
     <div class="layout-result-item">
-      <span>主体每格日产值</span>
+      <span>主体每格理论日产值</span>
       <strong id="layout-main-cell-value">0</strong>
       <small id="layout-main-cell-detail">按 75 格建筑占地</small>
     </div>
     <div class="layout-result-item">
-      <span>室内每格日产值</span>
+      <span>室内每格理论日产值</span>
       <strong id="layout-interior-cell-value">0</strong>
       <small id="layout-interior-cell-detail">按 182 格室内面积</small>
     </div>
